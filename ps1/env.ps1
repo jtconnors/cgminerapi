@@ -21,7 +21,7 @@ Set-Variable -Name PLATFORM -Value win
 #
 # Application specific variables
 #
-Set-Variable -Name PROJECT -Value cgminerspi
+Set-Variable -Name PROJECT -Value cgminerapi
 Set-Variable -Name VERSION -Value "4.10.0"
 Set-Variable -Name MAINCLASS -Value com.jtconnors.cgminerapi.Samples
 Set-Variable -Name MAINJAR -Value $PROJECT-$VERSION.jar
