@@ -152,7 +152,7 @@
                             <skip>false</skip>
                             <imageName>CgminerHttpServer</imageName>
                             <buildArgs>
-                                --no-fallback
+                                --no-fallback -R:MinHeapSize=16m -R:MaxHeapSize=64m
                             </buildArgs>
                         </configuration>
                     </execution>

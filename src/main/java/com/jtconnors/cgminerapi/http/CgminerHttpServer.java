@@ -13,7 +13,7 @@ import com.sun.net.httpserver.HttpServer;
 import com.jtconnors.cgminerapi.APIConnection;
 import com.jtconnors.cgminerapi.Command;
 import com.jtconnors.cgminerapi.Globals;
-import com.jtconnors.cgminerapi.InvalidQueryStringException;
+import com.jtconnors.cgminerapi.InvalidQueryStringException; 
 import com.jtconnors.cgminerapi.Util;
 
 public class CgminerHttpServer {
@@ -39,21 +39,15 @@ public class CgminerHttpServer {
                 LOGGER.log(Level.SEVERE, "{0}", errMsg);
                 exchange.sendResponseHeaders(400, errMsg.length());
                 os.write(errMsg.getBytes());
+            } finally {
+                LOGGER.log(Level.INFO, "\nMemory usage = {0}", 
+                    Runtime.getRuntime().totalMemory() -
+                    Runtime.getRuntime().freeMemory());
             }
         }
     }
 
-    public static void main(String[] args) throws IOException {
-
-        Runtime.getRuntime().addShutdownHook(new Thread() 
-        { 
-            public void run() 
-            { 
-                LOGGER.log(Level.INFO, "\nMemory usage = {0}", 
-                    Runtime.getRuntime().totalMemory() -
-                    Runtime.getRuntime().freeMemory());   
-            } 
-        });
+    public static void main(String[] args) throws Exception {
 
         Globals.parseArgs(args);
         LOGGER.log(Level.INFO, "cgminerHost = {0}", Globals.cgminerHost);
