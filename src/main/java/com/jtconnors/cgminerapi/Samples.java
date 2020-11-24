@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.lang.invoke.MethodHandles;
+import java.lang.management.ManagementFactory;
 
 import javax.json.Json;
 
@@ -27,6 +28,13 @@ public class Samples {
     }
     
     public static void main(String[] args) throws IOException {
+
+        /*
+         * Print out elasped time it took to get to here.  For argument's sake
+         * we'll call this the startup time.
+         */
+        LOGGER.log(Level.INFO, "\nStartup time = {0} milliseconds", 
+            System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime());
             
         Globals.parseArgs(args);
 		APIConnection apiConn = new APIConnection(
@@ -71,6 +79,10 @@ public class Samples {
         replyStr = apiConn.apiCall(jsonString);
         parser = new JSONParser(replyStr);
         printParseReply(parser.parseReply());
+
+        LOGGER.log(Level.INFO, "\nMemory usage = {0}", 
+                Runtime.getRuntime().totalMemory() -
+                Runtime.getRuntime().freeMemory());
     } 
 }
 

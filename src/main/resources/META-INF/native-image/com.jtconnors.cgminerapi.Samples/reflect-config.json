@@ -1,0 +1,14 @@
+[
+{
+  "name":"java.lang.management.ManagementFactory",
+  "methods":[{"name":"getRuntimeMXBean","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.management.RuntimeMXBean",
+  "methods":[{"name":"getInputArguments","parameterTypes":[] }]
+},
+{
+  "name":"org.glassfish.json.JsonProviderImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+}
+]

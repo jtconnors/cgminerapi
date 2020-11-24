@@ -6,15 +6,15 @@ import java.lang.invoke.MethodHandles;
 import java.net.InetSocketAddress;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+import java.lang.management.ManagementFactory;
+import com.sun.net.httpserver.HttpContext;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
 import com.jtconnors.cgminerapi.APIConnection;
 import com.jtconnors.cgminerapi.Command;
 import com.jtconnors.cgminerapi.Globals;
 import com.jtconnors.cgminerapi.InvalidQueryStringException;
 import com.jtconnors.cgminerapi.Util;
-import com.sun.net.httpserver.HttpContext;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer; 
 
 public class CgminerHttpServer {
 
@@ -44,6 +44,17 @@ public class CgminerHttpServer {
     }
 
     public static void main(String[] args) throws IOException {
+
+        Runtime.getRuntime().addShutdownHook(new Thread() 
+        { 
+            public void run() 
+            { 
+                LOGGER.log(Level.INFO, "\nMemory usage = {0}", 
+                    Runtime.getRuntime().totalMemory() -
+                    Runtime.getRuntime().freeMemory());   
+            } 
+        });
+
         Globals.parseArgs(args);
         LOGGER.log(Level.INFO, "cgminerHost = {0}", Globals.cgminerHost);
         LOGGER.log(Level.INFO, "cgminerPort = {0}", Globals.cgminerPort);
@@ -52,6 +63,13 @@ public class CgminerHttpServer {
             new InetSocketAddress(Globals.httpPort), 0);
         HttpContext context = server.createContext(CONTEXT);
         context.setHandler(CgminerHttpServer::handleRequest);
+        /*
+         * Print out elasped time it took to get to here.  For argument's sake
+         * we'll call this the startup time.
+         */
+        LOGGER.log(Level.INFO, "\nStartup time = {0} milliseconds", 
+            System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime());
+
         server.start();
     }
     
