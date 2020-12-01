@@ -68,7 +68,7 @@ public class APIConnection {
      * @param jsonCmd JSON String representing the command.
      * @return a JSON string representing the response to this call.
      */
-    public String apiCall(String jsonCmd) {
+    public String apiCall(String jsonCmd) throws IOException {
         LOGGER.log(Level.INFO, "command = {0}", jsonCmd);
         StringBuilder sb = new StringBuilder();
         char[] buf = new char[MAX_BYTES];
@@ -98,7 +98,7 @@ public class APIConnection {
                 }
             }
         } catch (IOException e) {
-           e.printStackTrace();    
+           throw new IOException(e.getMessage() + " " + ipAddr + ":" + port, e);    
         }
         LOGGER.log(Level.INFO, "reply = {0}", sb);
         return sb.toString();

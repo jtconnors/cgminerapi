@@ -8,5 +8,5 @@
 # o edited to reflect your JDK environment
 #
 
-$env:PATH = 'd:\openjdk\jdk8\bin;' + $env:PATH
-$env:JAVA_HOME = 'd:\openjdk\jdk8'
+$env:PATH = 'd:\Oracle\graalvm-ee-java11-20.3.0\bin;' + $env:PATH
+$env:JAVA_HOME = 'd:\Oracle\graalvm-ee-java11-20.3.0'

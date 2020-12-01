@@ -1,7 +1,9 @@
 package com.jtconnors.cgminerapi;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Properties;
 
 public class Globals {
 
@@ -16,9 +18,21 @@ public class Globals {
 
     public static final String API_VERSION = "4.10.0";
 
-    public static int cgminerPort = 4028;
-    public static String cgminerHost = "localhost";
-    public static int httpPort = 8000;
+    public static int cgminerPort;
+    public static String cgminerHost;
+    public static int httpPort;
+
+    static {
+        Properties properties = new Properties();
+        try {
+            properties.load(Globals.class.getResourceAsStream("/cgminerapi.properties"));
+        } catch (IOException e)  {
+            e.printStackTrace();
+        }
+        cgminerPort = Integer.parseInt(properties.getProperty("cgminerPort", "4028"));
+        cgminerHost = System.getProperty("cgminerHost", "localhost");
+        httpPort = Integer.parseInt(properties.getProperty("httpPort", "8000"));
+    }
 
     /*
      * Command-line arguments help message supplied if user specifies
@@ -30,7 +44,7 @@ public class Globals {
         "\t\tSpecify hostname (or IP Address) of socket",
         "  -cgminerPort:PORT_NUMBER (default 4028)",
         "\t\tSpecify port for socket connection to cgminer",
-        "  -httpPort:PORT_NUMBER (default 4028)",
+        "  -httpPort:PORT_NUMBER (default 8000)",
         "\t\t*ONLY VALID FOR HTTP SERVER*, Specify http server port",
         "  -help or --help",
         "\t\tPrint this screen for command-line argument options and exit",

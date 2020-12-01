@@ -12,7 +12,7 @@ public class Util {
      * @param e the {@code Excpetion}
      * @return the Exception's stack trace in {@code String} form
      */
-    public static String exceptionStackTraceToString(Exception e) {
+    public static String exceptionStackTraceToString(Throwable e) {
         StringWriter stackTrace = new StringWriter();
         e.printStackTrace(new PrintWriter(stackTrace));
         return stackTrace.toString();    
