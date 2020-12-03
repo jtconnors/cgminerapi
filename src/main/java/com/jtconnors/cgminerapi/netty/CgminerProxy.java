@@ -21,12 +21,17 @@
 
 package com.jtconnors.cgminerapi.netty;
 
-import java.io.IOException;
-import java.util.Properties;
+import java.lang.invoke.MethodHandles;
+import java.lang.management.ManagementFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.jtconnors.cgminerapi.CLArgs;
+import com.jtconnors.cgminerapi.Util;
+import static com.jtconnors.cgminerapi.CLArgs.*;
+
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -36,26 +41,36 @@ import io.netty.handler.logging.LoggingHandler;
  
 public final class CgminerProxy {
 
-    static int localPort;
-    static String remoteHost;
-    static int remotePort;
+    private static final String PROGNAME= "cgminerProxy";
+
+    private static CLArgs clArgs;
 
     static {
-        Properties properties = new Properties();
-        try {
-            properties.load(CgminerProxy.class.getResourceAsStream("/cgminerapi.properties"));
-        } catch (IOException e)  {
-            e.printStackTrace();
-        }
-        localPort = Integer.parseInt(System.getProperty("cgminerProxy.localPort", "4028"));
-        remoteHost = System.getProperty("cgminerProxy.remoteHost", "49er");
-        remotePort = Integer.parseInt(System.getProperty("cgminerProxy.remotePort", "4028"));
+        clArgs = new CLArgs(MethodHandles.lookup().lookupClass(), PROGNAME);
+        clArgs.addAllowableArg(LOCALPORT, "49er");
+        clArgs.addAllowableArg(REMOTEHOST, "4028");
+        clArgs.addAllowableArg(REMOTEPORT, "4028");
+        clArgs.addAllowableArg(DEBUGLOG, "false");
     }
  
     public static void main(String[] args) throws Exception {
-        // Disable Netty Logging
-        Logger.getLogger("io.netty").setLevel(Level.OFF);
-        System.err.println("Proxying *:" + localPort + " to " + remoteHost + ':' + remotePort + " ...");
+        int localPort;
+        String remoteHost;
+        int remotePort;
+        boolean debugLog;
+
+        clArgs.parseArgs(args);
+        localPort = Integer.parseInt(clArgs.getProperty(LOCALPORT));
+        remoteHost = clArgs.getProperty(REMOTEHOST);
+        remotePort = Integer.parseInt(clArgs.getProperty(REMOTEPORT));
+        debugLog = Boolean.parseBoolean(clArgs.getProperty(DEBUGLOG));
+        if (!debugLog) {
+            Logger.getLogger("io.netty").setLevel(Level.OFF);    
+        }
+        Util.checkHostValidity(remoteHost);
+        
+        System.err.println("Proxying *:" + localPort + " to " + 
+            remoteHost + ':' + remotePort + " ...");
  
         // Configure the bootstrap.
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
@@ -66,8 +81,20 @@ public final class CgminerProxy {
             .channel(NioServerSocketChannel.class)
             .handler(new LoggingHandler(LogLevel.INFO))
             .childHandler(new CgminerProxyInitializer(remoteHost, remotePort))
-            .childOption(ChannelOption.AUTO_READ, false)
-            .bind(localPort).sync().channel().closeFuture().sync();
+            .childOption(ChannelOption.AUTO_READ, false);
+
+            Channel ch = b.bind(localPort).sync().channel();
+
+            /*
+             * Print out elasped time it took to get to here.  For argument's 
+             * sake we'll call this the startup time.
+             */
+            System.err.println("Startup time = " +
+                    (System.currentTimeMillis() -
+                    ManagementFactory.getRuntimeMXBean().getStartTime()) +
+                    "ms");
+                    
+            ch.closeFuture().sync();
         } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();

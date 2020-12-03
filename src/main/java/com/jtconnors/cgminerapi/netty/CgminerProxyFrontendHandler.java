@@ -35,8 +35,9 @@ public class CgminerProxyFrontendHandler extends ChannelInboundHandlerAdapter {
     private final String remoteHost;
     private final int remotePort;
 
-    // As we use inboundChannel.eventLoop() when building the Bootstrap this does not need to be volatile as
-    // the outboundChannel will use the same EventLoop (and therefore Thread) as the inboundChannel.
+    // As we use inboundChannel.eventLoop() when building the Bootstrap,
+    // this does not need to be volatile as the outboundChannel will use the
+    // same EventLoop (and therefore Thread) as the inboundChannel.
     private Channel outboundChannel;
 
     public CgminerProxyFrontendHandler(String remoteHost, int remotePort) {
@@ -56,18 +57,6 @@ public class CgminerProxyFrontendHandler extends ChannelInboundHandlerAdapter {
          .option(ChannelOption.AUTO_READ, false);
         ChannelFuture f = b.connect(remoteHost, remotePort);
         outboundChannel = f.channel();
-        //f.addListener(new ChannelFutureListener() {
-        //    @Override
-        //    public void operationComplete(ChannelFuture future) {
-        //        if (future.isSuccess()) {
-        //            // connection complete start to read first data
-        //            inboundChannel.read();
-        //        } else {
-        //            // Close the connection if the connection attempt has failed.
-        //            inboundChannel.close();
-        //        }
-        //    }
-        // });
         f.addListener(future -> {
             if (future.isSuccess()) {
                 // connection complete start to read first data
@@ -82,17 +71,6 @@ public class CgminerProxyFrontendHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) {
         if (outboundChannel.isActive()) {
-            //outboundChannel.writeAndFlush(msg).addListener(new ChannelFutureListener() {
-            //    @Override
-            //    public void operationComplete(ChannelFuture future) {
-            //        if (future.isSuccess()) {
-            //            // was able to flush out data, start to read the next chunk
-            //            ctx.channel().read();
-            //        } else {
-            //            future.channel().close();
-            //        }
-            //    }
-            //});
             outboundChannel.writeAndFlush(msg).addListener(future -> {
                 if (future.isSuccess()) {
                     // was able to flush out data, start to read the next chunk
@@ -122,7 +100,8 @@ public class CgminerProxyFrontendHandler extends ChannelInboundHandlerAdapter {
      */
     static void closeOnFlush(Channel ch) {
         if (ch.isActive()) {
-            ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+            ch.writeAndFlush(Unpooled.EMPTY_BUFFER)
+                .addListener(ChannelFutureListener.CLOSE);
         }
     }
 }

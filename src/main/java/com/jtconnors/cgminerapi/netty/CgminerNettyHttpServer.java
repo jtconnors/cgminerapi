@@ -19,8 +19,15 @@
 
 package com.jtconnors.cgminerapi.netty;
 
-import java.io.IOException;
-import java.util.Properties;
+import java.lang.invoke.MethodHandles;
+import java.lang.management.ManagementFactory;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import com.jtconnors.cgminerapi.CLArgs;
+import com.jtconnors.cgminerapi.Util;
+
+import static com.jtconnors.cgminerapi.CLArgs.*;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -35,35 +42,58 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 
 /**
- * An HTTP server that sends back the content of the received HTTP request
- * in a pretty plaintext form.
+ * An HTTP interface into a {@code cgminer} - virtual currency mining software
  */
 public final class CgminerNettyHttpServer {
 
+    private static final Logger LOGGER = 
+            Logger.getLogger("com.jtconnors.cgminerapi");
+
+    private static final String PROGNAME= "cgminerNettyHttpServer";
     public static final String CONTEXT = "/cgminer";
 
-    static boolean ssl;
-    static int port;
+    private static CLArgs clArgs;
 
     static {
-        Properties properties = new Properties();
-        try {
-            properties.load(CgminerProxy.class.getResourceAsStream("/cgminerapi.properties"));
-        } catch (IOException e)  {
-            e.printStackTrace();
-        }
-        ssl = Boolean.parseBoolean(properties.getProperty("cgminerNettyHttpServer.ssl", "false"));
-        port = ssl ?
-            Integer.parseInt(properties.getProperty("cgminerNettyHttpServer.httpsPort", "8001")) 
-            : Integer.parseInt(properties.getProperty("cgminerNettyHttpServer.httpPort", "8000"));
+        clArgs = new CLArgs(MethodHandles.lookup().lookupClass(), PROGNAME);
+        clArgs.addAllowableArg(CGMINERHOST, "localhost");
+        clArgs.addAllowableArg(CGMINERPORT, "4028");
+        clArgs.addAllowableArg(HTTPPORT, "4000");
+        clArgs.addAllowableArg(HTTPSPORT, "4001");
+        clArgs.addAllowableArg(SSL, "false");
+        clArgs.addAllowableArg(DEBUGLOG, "false");
     }
 
     public static void main(String[] args) throws Exception {
-        // Configure SSL.
+        String cgminerHost;
+        int cgminerPort;
+        boolean ssl;
+        int port;
+        boolean debugLog;
         final SslContext sslCtx;
+
+        clArgs.parseArgs(args);
+        cgminerHost = clArgs.getProperty(CGMINERHOST);
+        cgminerPort = Integer.parseInt(clArgs.getProperty(CGMINERPORT));
+        ssl = Boolean.parseBoolean(clArgs.getProperty(SSL));
+        port = ssl  ? Integer.parseInt(clArgs.getProperty(HTTPSPORT))
+                    : Integer.parseInt(clArgs.getProperty(HTTPPORT));
+        debugLog = Boolean.parseBoolean(clArgs.getProperty(DEBUGLOG));
+        System.err.println("starting at " + (ssl ? "https" : "http") +
+                "://localhost:" + port);
+        System.err.println("cgminer at " + cgminerHost + ":" + cgminerPort);
+                
+        if (!debugLog) {
+            LOGGER.setLevel(Level.OFF);
+            Logger.getLogger("io.netty").setLevel(Level.OFF);    
+        }
+        Util.checkHostValidity(cgminerHost);
+
+        // Configure SSL.
         if (ssl) {
             SelfSignedCertificate ssc = new SelfSignedCertificate();
-            sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
+            sslCtx = SslContextBuilder.forServer(ssc.certificate(),
+                ssc.privateKey()).build();
         } else {
             sslCtx = null;
         }
@@ -77,12 +107,19 @@ public final class CgminerNettyHttpServer {
             b.group(bossGroup, workerGroup)
              .channel(NioServerSocketChannel.class)
              .handler(new LoggingHandler(LogLevel.INFO))
-             .childHandler(new CgminerNettyHttpServerInitializer(sslCtx));
+             .childHandler(new CgminerNettyHttpServerInitializer(sslCtx,
+                 cgminerHost, cgminerPort));
 
             Channel ch = b.bind(port).sync().channel();
 
-            System.err.println("Open your web browser and navigate to " +
-                    (ssl? "https" : "http") + "://127.0.0.1:" + port + CONTEXT);
+            /*
+             * Print out elasped time it took to get to here.  For argument's 
+             * sake we'll call this the startup time.
+             */
+            System.err.println("Startup time = " +
+                    (System.currentTimeMillis() -
+                    ManagementFactory.getRuntimeMXBean().getStartTime()) +
+                    "ms");
 
             ch.closeFuture().sync();
         } finally {

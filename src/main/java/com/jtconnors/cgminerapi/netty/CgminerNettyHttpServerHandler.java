@@ -45,18 +45,29 @@ import java.util.logging.Logger;
 
 import com.jtconnors.cgminerapi.APIConnection;
 import com.jtconnors.cgminerapi.Command;
-import com.jtconnors.cgminerapi.Globals;
 import com.jtconnors.cgminerapi.InvalidQueryStringException;
 import com.jtconnors.cgminerapi.Util;
 
-public class CgminerNettyHttpServerHandler extends ChannelInboundHandlerAdapter {
+public class CgminerNettyHttpServerHandler
+    extends ChannelInboundHandlerAdapter {
 
-    private static final Logger LOGGER = Logger.getLogger(MethodHandles.lookup().lookupClass().getName());
+    private static final Class<?> thisClass =
+        MethodHandles.lookup().lookupClass();
+    private static final Logger LOGGER = Logger.getLogger(thisClass.getName());
 
     class ResponseBlock {
         HttpResponseStatus httpResponseStatus;
         String contentStr;    
     }
+
+    private final String cgminerHost;
+    private final int cgminerPort;
+
+    public CgminerNettyHttpServerHandler(String cgminerHost, int cgminerPort) {
+        super();
+        this.cgminerHost = cgminerHost;
+        this.cgminerPort = cgminerPort;
+    } 
 
     private ResponseBlock parseUriString(String uriStr) {
         ResponseBlock rb = new ResponseBlock();
@@ -87,7 +98,7 @@ public class CgminerNettyHttpServerHandler extends ChannelInboundHandlerAdapter 
             String queryStr = uriStr.substring(CgminerNettyHttpServer.CONTEXT.length()+1);
             String jsonCommandStr = Command.parseQueryString(queryStr).toJSONString();
             LOGGER.log(Level.INFO, "JSON  command = {0}", jsonCommandStr);
-            rb.contentStr = new APIConnection(Globals.cgminerHost, Globals.cgminerPort)
+            rb.contentStr = new APIConnection(cgminerHost, cgminerPort)
                     .apiCall(jsonCommandStr); 
             rb.httpResponseStatus = OK;           
         } catch (InvalidQueryStringException | IOException e) {

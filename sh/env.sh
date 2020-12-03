@@ -57,6 +57,7 @@ TARGET=target
 EXTERNAL_CLASSPATH=(
     "$REPO/javax/json/javax.json.api/1.1.4/json-api-1.1.4.jar"
     "$REPO/org/glassfish/javax.json/1.1/javax.json-1.1.jar"
+	"$REPO/io/netty/netty-all/4.1.54.Final/netty-all-4.1.54.Final.jar"
 )
 
 #

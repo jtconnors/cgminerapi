@@ -31,14 +31,13 @@
 
 package com.jtconnors.cgminerapi;
 
-import java.lang.invoke.MethodHandles;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Command {
 
-    private static final Logger LOGGER
-            = Logger.getLogger(MethodHandles.lookup().lookupClass().getName());
+    private static final Logger LOGGER = 
+            Logger.getLogger("com.jtconnors.cgminerapi");
 
     private final Request request;
     private final String parameter;

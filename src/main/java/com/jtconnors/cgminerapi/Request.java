@@ -187,9 +187,7 @@ public enum Request {
             Request retVal = null;
             try {
               retVal = valueOf(requestStr.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                  e.printStackTrace();
-            }
+            } catch (IllegalArgumentException e) {/* catch and do nothing */}
             return retVal;
         }
     }

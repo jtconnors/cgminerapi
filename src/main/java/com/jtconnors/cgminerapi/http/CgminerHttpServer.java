@@ -12,25 +12,44 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import com.jtconnors.cgminerapi.APIConnection;
 import com.jtconnors.cgminerapi.Command;
-import com.jtconnors.cgminerapi.Globals;
 import com.jtconnors.cgminerapi.InvalidQueryStringException; 
 import com.jtconnors.cgminerapi.Util;
+import com.jtconnors.cgminerapi.CLArgs;
+import static com.jtconnors.cgminerapi.CLArgs.*;
 
 public class CgminerHttpServer {
 
-    private static final Logger LOGGER = Logger.getLogger(MethodHandles.lookup().lookupClass().getName());
+    private static final Logger LOGGER = 
+            Logger.getLogger("com.jtconnors.cgminerapi");
 
+    private static final String PROGNAME= "cgminerHttpServer";
     public static final String CONTEXT = "/cgminer";
 
-    private static void handleRequest(HttpExchange exchange) throws IOException {
+    private static CLArgs clArgs;
+
+    static {
+        clArgs = new CLArgs(MethodHandles.lookup().lookupClass(), PROGNAME);
+        clArgs.addAllowableArg(CGMINERHOST, "localhost");
+        clArgs.addAllowableArg(CGMINERPORT, "4028");
+        clArgs.addAllowableArg(HTTPPORT, "4000");
+        clArgs.addAllowableArg(DEBUGLOG, "false");
+    }
+
+    private static String cgminerHost;
+    private static int cgminerPort;
+    private static int httpPort;
+    private static boolean debugLog;
+
+    private static void handleRequest(HttpExchange exchange) throws IOException{
         String queryStr = exchange.getRequestURI().getQuery();
         LOGGER.log(Level.INFO, "http query string = {0}", queryStr);
         try (OutputStream os = exchange.getResponseBody()) {
             try {
-                String jsonCommandStr = Command.parseQueryString(queryStr).toJSONString();
+                String jsonCommandStr =
+                    Command.parseQueryString(queryStr).toJSONString();
                 LOGGER.log(Level.INFO, "JSON  command = {0}", jsonCommandStr);
                 String replyStr =
-                    new APIConnection(Globals.cgminerHost, Globals.cgminerPort)
+                    new APIConnection(cgminerHost, cgminerPort)
                         .apiCall(jsonCommandStr);      
                 exchange.sendResponseHeaders(200, replyStr.length());
                 os.write(replyStr.getBytes());
@@ -40,7 +59,7 @@ public class CgminerHttpServer {
                 exchange.sendResponseHeaders(400, errMsg.length());
                 os.write(errMsg.getBytes());
             } finally {
-                LOGGER.log(Level.INFO, "\nMemory usage = {0}", 
+                LOGGER.log(Level.INFO, "Memory usage = {0}", 
                     Runtime.getRuntime().totalMemory() -
                     Runtime.getRuntime().freeMemory());
             }
@@ -48,23 +67,36 @@ public class CgminerHttpServer {
     }
 
     public static void main(String[] args) throws Exception {
+        clArgs.parseArgs(args);
+        cgminerHost = clArgs.getProperty(CGMINERHOST);
+        cgminerPort = Integer.parseInt(clArgs.getProperty(CGMINERPORT));
+        httpPort = Integer.parseInt(clArgs.getProperty(HTTPPORT));
+        debugLog = Boolean.parseBoolean(clArgs.getProperty(DEBUGLOG));
+        System.err.println("starting at http://localhost:" + httpPort);
+        System.err.println("cgminer at " + cgminerHost + ":" + cgminerPort);
 
-        Globals.parseArgs(args);
-        LOGGER.log(Level.INFO, "cgminerHost = {0}", Globals.cgminerHost);
-        LOGGER.log(Level.INFO, "cgminerPort = {0}", Globals.cgminerPort);
-        LOGGER.log(Level.INFO, "httpPort = {0}", Globals.httpPort);
+        if (!debugLog) {
+            LOGGER.setLevel(Level.OFF);
+        }
+
+        Util.checkHostValidity(cgminerHost);
+        LOGGER.log(Level.INFO, "cgminerHost = {0}", cgminerHost);
+        LOGGER.log(Level.INFO, "cgminerPort = {0}", cgminerPort);
+        LOGGER.log(Level.INFO, "httpPort = {0}", httpPort);
+        LOGGER.log(Level.INFO, "debugLog = {0}", debugLog);
         HttpServer server = HttpServer.create(
-            new InetSocketAddress(Globals.httpPort), 0);
+            new InetSocketAddress(httpPort), 0);
         HttpContext context = server.createContext(CONTEXT);
         context.setHandler(CgminerHttpServer::handleRequest);
+
+        server.start();
         /*
          * Print out elasped time it took to get to here.  For argument's sake
          * we'll call this the startup time.
          */
-        LOGGER.log(Level.INFO, "\nStartup time = {0} milliseconds", 
-            System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime());
-
-        server.start();
+        System.err.println("Startup time = " +
+            (System.currentTimeMillis() -
+            ManagementFactory.getRuntimeMXBean().getStartTime()) + "ms");
     }
     
 }

@@ -25,12 +25,18 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.ssl.SslContext;
 
-public class CgminerNettyHttpServerInitializer extends ChannelInitializer<SocketChannel> {
+public class CgminerNettyHttpServerInitializer
+    extends ChannelInitializer<SocketChannel> {
 
     private final SslContext sslCtx;
+    private final String cgminerHost;
+    private final int cgminerPort;
 
-    public CgminerNettyHttpServerInitializer(SslContext sslCtx) {
+    public CgminerNettyHttpServerInitializer(SslContext sslCtx, 
+            String cgminerHost, int cgminerPort) {
         this.sslCtx = sslCtx;
+        this.cgminerHost = cgminerHost;
+        this.cgminerPort = cgminerPort;
     }
 
     @Override
@@ -40,6 +46,6 @@ public class CgminerNettyHttpServerInitializer extends ChannelInitializer<Socket
             p.addLast(sslCtx.newHandler(ch.alloc()));
         }
         p.addLast(new HttpServerCodec());
-        p.addLast(new CgminerNettyHttpServerHandler());
+        p.addLast(new CgminerNettyHttpServerHandler(cgminerHost, cgminerPort));
     }
 }

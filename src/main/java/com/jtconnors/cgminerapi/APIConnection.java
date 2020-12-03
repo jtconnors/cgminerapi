@@ -34,7 +34,6 @@ package com.jtconnors.cgminerapi;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -54,9 +53,9 @@ import java.util.logging.Logger;
 public class APIConnection {
     
     public static final String API_VERSION = "4.10.0";
-    
-    private static final Logger LOGGER =
-            Logger.getLogger(MethodHandles.lookup().lookupClass().getName());
+
+    private static final Logger LOGGER = 
+            Logger.getLogger("com.jtconnors.cgminerapi");
 
     private final InetAddress ipAddr;
     private final int port;
